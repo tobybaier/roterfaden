@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verliere den roten Faden!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Trebuchet MS', cursive, sans-serif;
+            line-height: 1.6;
+            color: #2c1810;
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 50%, #fd79a8 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated red thread background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(45deg, transparent 40%, rgba(220, 38, 38, 0.1) 40%, rgba(220, 38, 38, 0.1) 60%, transparent 60%),
+                linear-gradient(-45deg, transparent 40%, rgba(220, 38, 38, 0.1) 40%, rgba(220, 38, 38, 0.1) 60%, transparent 60%);
+            background-size: 60px 60px;
+            animation: threadMove 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes threadMove {
+            0% { transform: translateX(0) translateY(0); }
+            25% { transform: translateX(30px) translateY(-30px); }
+            50% { transform: translateX(0) translateY(-60px); }
+            75% { transform: translateX(-30px) translateY(-30px); }
+            100% { transform: translateX(0) translateY(0); }
+        }
+
+        /* Floating thread pieces */
+        .thread-piece {
+            position: fixed;
+            width: 4px;
+            height: 60px;
+            background: linear-gradient(45deg, #dc2626, #ef4444, #dc2626);
+            border-radius: 2px;
+            animation: float 6s ease-in-out infinite;
+            z-index: 1;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+        }
+
+        .thread-piece:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+        .thread-piece:nth-child(2) { top: 30%; right: 15%; animation-delay: 1s; }
+        .thread-piece:nth-child(3) { top: 60%; left: 20%; animation-delay: 2s; }
+        .thread-piece:nth-child(4) { top: 80%; right: 25%; animation-delay: 3s; }
+        .thread-piece:nth-child(5) { top: 40%; left: 50%; animation-delay: 4s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-20px) rotate(5deg); }
+            50% { transform: translateY(-10px) rotate(-3deg); }
+            75% { transform: translateY(-15px) rotate(2deg); }
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 10;
+            border: 3px solid #dc2626;
+            border-style: dashed;
+        }
+
+        /* Thread connector lines */
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            right: -15px;
+            bottom: -15px;
+            border: 2px solid #dc2626;
+            border-radius: 25px;
+            opacity: 0.3;
+            animation: threadGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes threadGlow {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.02); }
+        }
+
+        h1 {
+            color: #dc2626;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(220, 38, 38, 0.3);
+            position: relative;
+            animation: titleBounce 2s ease-in-out infinite;
+        }
+
+        h1::before {
+            content: '🧵';
+            position: absolute;
+            left: -60px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.6em;
+            animation: threadSwing 2s ease-in-out infinite;
+        }
+
+        h1::after {
+            content: '🧵';
+            position: absolute;
+            right: -60px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.6em;
+            animation: threadSwing 2s ease-in-out infinite reverse;
+        }
+
+        @keyframes titleBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        @keyframes threadSwing {
+            0%, 100% { transform: translateY(-50%) rotate(0deg); }
+            50% { transform: translateY(-50%) rotate(15deg); }
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #7c2d12;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(124, 45, 18, 0.2);
+        }
+
+        .rules {
+            background: linear-gradient(135deg, #fef2f2, #fce7f3);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 4px solid #dc2626;
+            border-right: 4px solid #dc2626;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.1);
+        }
+
+        .rules::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #dc2626, #ef4444, #dc2626);
+            border-radius: 14px;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        .rules h3 {
+            color: #dc2626;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+            text-shadow: 1px 1px 2px rgba(220, 38, 38, 0.2);
+        }
+
+        .rules ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .rules li {
+            margin: 8px 0;
+            padding-left: 30px;
+            position: relative;
+            color: #7c2d12;
+            font-weight: 500;
+        }
+
+        .rules li:before {
+            content: "🧵";
+            position: absolute;
+            left: 0;
+            color: #dc2626;
+            font-weight: bold;
+            animation: threadPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes threadPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .section {
+            margin: 30px 0;
+            padding: 25px;
+            background: linear-gradient(135deg, #ffffff, #fef7f7);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 2px solid #fecaca;
+            position: relative;
+        }
+
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            height: 3px;
+            background: linear-gradient(90deg, #dc2626, #ef4444, #dc2626);
+            border-radius: 2px;
+            opacity: 0.6;
+        }
+
+        .section h2 {
+            color: #dc2626;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            border-bottom: 3px solid #dc2626;
+            padding-bottom: 5px;
+            text-shadow: 1px 1px 2px rgba(220, 38, 38, 0.2);
+            position: relative;
+        }
+
+        .section h2::before {
+            content: '🧵';
+            margin-right: 10px;
+            animation: threadSwing 2s ease-in-out infinite;
+        }
+
+        .player-files {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .player-files::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #dc2626, #ef4444, #dc2626);
+            border-radius: 2px;
+            opacity: 0.3;
+            z-index: 1;
+        }
+
+        .player-card {
+            background: linear-gradient(135deg, #fef2f2, #fce7f3);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #fecaca;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .player-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.2);
+        }
+
+        .player-card::before {
+            content: '';
+            position: absolute;
+            left: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background: #dc2626;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px #dc2626;
+        }
+
+        /* Mystery player card for hidden second recording */
+        .mystery-player-card {
+            background: linear-gradient(135deg, #fef2f2, #fce7f3);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px dashed #fecaca;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            opacity: 0.7;
+            animation: mysteryPulse 3s ease-in-out infinite;
+        }
+
+        .mystery-player-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.2);
+        }
+
+        .mystery-player-card::before {
+            content: '';
+            position: absolute;
+            left: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background: #dc2626;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px #dc2626;
+            animation: mysteryDotPulse 2s ease-in-out infinite;
+        }
+
+        .mystery-player-title {
+            font-weight: 600;
+            color: #dc2626;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-shadow: 1px 1px 2px rgba(220, 38, 38, 0.2);
+            position: relative;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .mystery-player-title::before {
+            content: '🧵';
+            margin-right: 8px;
+            animation: threadSwing 2s ease-in-out infinite;
+        }
+
+        .mystery-player-title::after {
+            content: '🧵';
+            margin-left: 8px;
+            animation: threadSwing 2s ease-in-out infinite reverse;
+        }
+
+        .mystery-content {
+            text-align: center;
+            color: #7c2d12;
+            font-style: italic;
+            position: relative;
+        }
+
+        .mystery-content::before {
+            content: '❓';
+            display: block;
+            font-size: 2em;
+            margin-bottom: 10px;
+            animation: mysteryQuestion 2s ease-in-out infinite;
+        }
+
+        @keyframes mysteryPulse {
+            0%, 100% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.02); }
+        }
+
+        @keyframes mysteryDotPulse {
+            0%, 100% { transform: translateY(-50%) scale(1); }
+            50% { transform: translateY(-50%) scale(1.3); }
+        }
+
+        @keyframes mysteryQuestion {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-10deg) scale(1.1); }
+            75% { transform: rotate(10deg) scale(1.1); }
+        }
+
+        /* Download button styling */
+        .download-button {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            color: white;
+            border: 2px solid #fecaca;
+            padding: 8px 16px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .download-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .download-button:hover::before {
+            left: 100%;
+        }
+
+        .download-button:hover {
+            background: linear-gradient(135deg, #b91c1c, #dc2626);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+        }
+
+        .download-button:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .download-button:disabled::before {
+            display: none;
+        }
+
+        .player-title {
+            font-weight: 600;
+            color: #dc2626;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-shadow: 1px 1px 2px rgba(220, 38, 38, 0.2);
+            position: relative;
+        }
+
+        .player-title::before {
+            content: '🧵';
+            margin-right: 8px;
+            animation: threadPulse 2s ease-in-out infinite;
+        }
+
+        .audio-file {
+            margin: 10px 0;
+        }
+
+        .audio-file label {
+            display: block;
+            margin-bottom: 5px;
+            color: #718096;
+            font-size: 0.9em;
+        }
+
+        audio {
+            width: 100%;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        .upload-section {
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255, 255, 255, 0.1) 10px,
+                rgba(255, 255, 255, 0.1) 20px
+            );
+            animation: threadPattern 10s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes threadPattern {
+            0% { transform: translateX(0) translateY(0); }
+            100% { transform: translateX(20px) translateY(20px); }
+        }
+
+        .upload-section h2 {
+            color: white;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input {
+            opacity: 0;
+            width: 100%;
+            height: 60px;
+            position: absolute;
+            cursor: pointer;
+        }
+
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .file-input-label:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: white;
+        }
+
+        .upload-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .upload-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .upload-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .message {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #feb2b2;
+        }
+
+        .info {
+            background: #bee3f8;
+            color: #2a4365;
+            border: 1px solid #90cdf4;
+        }
+
+        .waiting {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+            font-style: italic;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .current-player-info {
+            background: linear-gradient(45deg, #dc2626, #ef4444);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+            border: 2px solid #fecaca;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+            position: relative;
+        }
+
+        .current-player-info::before {
+            content: '🧵';
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: threadSwing 2s ease-in-out infinite;
+        }
+
+        .current-player-info::after {
+            content: '🧵';
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: threadSwing 2s ease-in-out infinite reverse;
+        }
+
+        .recording-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .record-button {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            color: white;
+            border: 3px solid #fecaca;
+            padding: 20px 40px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .record-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .record-button:hover::before {
+            left: 100%;
+        }
+
+        .record-button:hover {
+            background: linear-gradient(135deg, #b91c1c, #dc2626);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
+        }
+
+        .record-button:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .record-button.recording {
+            background: linear-gradient(135deg, #16a34a, #22c55e);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .recording-status {
+            text-align: center;
+            font-weight: 600;
+            color: white;
+            margin: 10px 0;
+        }
+
+        .recording-timer {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e53e3e;
+            margin: 10px 0;
+        }
+
+        .audio-preview {
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        .recording-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .action-button {
+            padding: 10px 20px;
+            border: 2px solid white;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .action-button:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .action-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .name-input-section {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .name-label {
+            display: block;
+            color: white;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .name-input {
+            width: 100%;
+            max-width: 300px;
+            padding: 12px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .name-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: white;
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .section {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating thread pieces -->
+    <div class="thread-piece"></div>
+    <div class="thread-piece"></div>
+    <div class="thread-piece"></div>
+    <div class="thread-piece"></div>
+    <div class="thread-piece"></div>
+
+    <div class="container">
+        <h1>Verliere den roten Faden!</h1>
+        <p class="subtitle">Ein kollaboratives Audio-Aufnahme-Erlebnis</p>
+
+        <div class="rules">
+            <h3>📋 So funktioniert es:</h3>
+            <ul>
+                <li>Wir schreiben gemeinsam eine Geschichte!</li>
+                <li>Jeder Spieler führt die Geschichte mit zwei Audioaufnahmen fort</li>
+                <li>Leider sieht man die zweite Aufnahme des vorherigen Spielers erst, wenn man selbst die erste Aufnahme gespeichert hat.</li>
+                <li>Be excellent to each other!</li>
+            </ul>
+        </div>
+
+        <!-- Current Game State -->
+        <div class="section">
+            <h2>🎼 Die Geschichte bisher</h2>
+            <div id="audio-files-container">
+                <div class="waiting">
+                    <div class="loading"></div>
+                    Spielstatus wird geladen...
+                </div>
+            </div>
+            <div id="download-section" style="display: none; text-align: center; margin-top: 20px;">
+                <button id="download-story-btn" class="download-button">
+                    📥 Komplette Geschichte herunterladen
+                </button>
+                <div id="download-progress" style="display: none; margin-top: 10px;">
+                    <div class="loading"></div>
+                    <span>Geschichte wird zusammengefügt...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recording Section -->
+        <div class="section upload-section" id="recording-section">
+            <h2>🎤 Eigene Fortsetzung aufnehmen</h2>
+            <div id="recording-content">
+                <div class="waiting">
+                    <div class="loading"></div>
+                    Aufnahme-Interface wird vorbereitet...
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        let gameState = null;
+        let playerStatus = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+        let recordingStartTime = null;
+        let recordingTimer = null;
+        let currentRecordingType = null; // 'first' or 'second'
+        let currentAudioBlob = null; // Store the recorded audio blob
+        let playerName = null; // Store the current player's name
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadGameState();
+        });
+
+        // Load current game state from server
+        async function loadGameState() {
+            try {
+                const response = await fetch('/api/game-state');
+                const data = await response.json();
+                
+                gameState = data.gameState;
+                playerStatus = data.playerStatus;
+                
+                updateAudioFilesDisplay(data.visibleFiles);
+                updateRecordingInterface();
+            } catch (error) {
+                showMessage('Spielstatus konnte nicht geladen werden: ' + error.message, 'error');
+            }
+        }
+
+        // Update the audio files display
+        function updateAudioFilesDisplay(visibleFiles) {
+            const container = document.getElementById('audio-files-container');
+            
+            if (visibleFiles.length === 0) {
+                container.innerHTML = '<div class="waiting">Noch keine Audio-Dateien. Sei der erste Spieler!</div>';
+                return;
+            }
+
+            // Store previous state to detect newly revealed second recordings
+            const previousVisibleFiles = window.previousVisibleFiles || [];
+            let newlyRevealedSecondFile = null;
+
+            let html = '<div class="player-files">';
+            
+            for (let i = 0; i < visibleFiles.length; i++) {
+                const player = visibleFiles[i];
+                const previousPlayer = previousVisibleFiles[i];
+                
+                html += `<div class="player-card">`;
+                html += `<div class="player-title">${player.playerName}</div>`;
+                
+                if (player.firstFile) {
+                    html += `<div class="audio-file">`;
+                    html += `<label>Erste Audio-Datei:</label>`;
+                    html += `<audio controls class="auto-play-audio"><source src="/uploads/${player.firstFile}" type="audio/webm">Ihr Browser unterstützt das Audio-Element nicht.</audio>`;
+                    html += `</div>`;
+                }
+                
+                if (player.secondFile) {
+                    html += `<div class="audio-file">`;
+                    html += `<label>Zweite Audio-Datei:</label>`;
+                    html += `<audio controls class="auto-play-audio" data-player-index="${i}"><source src="/uploads/${player.secondFile}" type="audio/webm">Ihr Browser unterstützt das Audio-Element nicht.</audio>`;
+                    html += `</div>`;
+                    
+                    // Check if this second file was just revealed
+                    if (!previousPlayer || !previousPlayer.secondFile) {
+                        newlyRevealedSecondFile = i;
+                    }
+                }
+                
+                html += `</div>`;
+            }
+            
+            // Add mystery card if there's a hidden second recording from the previous player
+            // This only happens when no player is currently recording
+            if (playerStatus && !playerStatus.isRecording && visibleFiles.length > 0) {
+                const lastPlayer = visibleFiles[visibleFiles.length - 1];
+                if (lastPlayer && lastPlayer.firstFile && !lastPlayer.secondFile) {
+                    html += `<div class="mystery-player-card">`;
+                    html += `<div class="mystery-player-title">Der zweite Satz von ${lastPlayer.playerName}</div>`;
+                    html += `<div class="mystery-content">`;
+                    html += `wird erst nach der Aufnahme Deines ersten Satzes gezeigt`;
+                    html += `</div>`;
+                    html += `</div>`;
+                }
+            }
+            
+            html += '</div>';
+            container.innerHTML = html;
+            
+            // Show download button if there are audio files
+            const downloadSection = document.getElementById('download-section');
+            if (downloadSection) {
+                downloadSection.style.display = visibleFiles.length > 0 ? 'block' : 'none';
+            }
+            
+            // Store current state for next comparison
+            window.previousVisibleFiles = visibleFiles;
+            
+            // Set up auto-play functionality
+            setupAutoPlay();
+            
+            // Auto-play newly revealed second recording
+            if (newlyRevealedSecondFile !== null) {
+                setTimeout(() => {
+                    const audioElements = document.querySelectorAll('.auto-play-audio');
+                    const secondFileAudio = document.querySelector(`audio[data-player-index="${newlyRevealedSecondFile}"]`);
+                    if (secondFileAudio) {
+                        secondFileAudio.play().catch(error => {
+                            // Auto-play might be prevented by browser
+                        });
+                    }
+                }, 500); // Small delay to ensure audio is loaded
+            }
+        }
+
+        // Update recording interface based on current player status
+        function updateRecordingInterface() {
+            const container = document.getElementById('recording-content');
+            
+            if (!playerStatus) {
+                container.innerHTML = '<div class="waiting">Laden...</div>';
+                return;
+            }
+
+            let html = '';
+
+            if (playerStatus.canRecordFirst) {
+                html += `<div class="current-player-info">Du bist Spieler ${playerStatus.playerNumber} - Nimm deinen ersten Audio-Clip auf</div>`;
+                html += `
+                    <div class="recording-controls">
+                        <div class="name-input-section">
+                            <label for="player-name-input" class="name-label">Gib deinen Namen ein:</label>
+                            <input type="text" id="player-name-input" class="name-input" placeholder="Dein Name" maxlength="20">
+                        </div>
+                        <button id="record-first-btn" class="record-button">
+                            🎤 Ersten Clip aufnehmen
+                        </button>
+                        <div id="recording-timer" class="recording-timer" style="display: none;">
+                            00:00
+                        </div>
+                        <audio id="audio-preview" class="audio-preview" controls style="display: none;"></audio>
+                        <div id="recording-actions" class="recording-actions" style="display: none;">
+                            <button id="save-first-btn" class="action-button">Aufnahme speichern</button>
+                            <button id="discard-first-btn" class="action-button">Verwerfen & Neu aufnehmen</button>
+                        </div>
+                    </div>
+                `;
+            } else if (playerStatus.canRecordSecond) {
+                html += `<div class="current-player-info">Spieler ${playerStatus.playerNumber} - Nimm deinen zweiten Audio-Clip auf</div>`;
+                html += `
+                    <div class="recording-controls">
+                        <button id="record-second-btn" class="record-button">
+                            🎤 Zweiten Clip aufnehmen
+                        </button>
+                        <div id="recording-timer" class="recording-timer" style="display: none;">
+                            00:00
+                        </div>
+                        <audio id="audio-preview" class="audio-preview" controls style="display: none;"></audio>
+                        <div id="recording-actions" class="recording-actions" style="display: none;">
+                            <button id="save-second-btn" class="action-button">Aufnahme speichern</button>
+                            <button id="discard-second-btn" class="action-button">Verwerfen & Neu aufnehmen</button>
+                        </div>
+                    </div>
+                `;
+            } else if (playerStatus.isRecording) {
+                html += '<div class="waiting">⏳ Ein anderer Spieler nimmt gerade auf, bitte warten...</div>';
+            } else {
+                html += '<div class="waiting">🎉 Alles erledigt! Du kannst die Seite aktualisieren, um die Aufnahmen anderer Spieler zu sehen oder eine neue Session zu starten.</div>';
+            }
+
+            container.innerHTML = html;
+
+            // Add event listeners for recording buttons
+            if (playerStatus.canRecordFirst) {
+                const recordBtn = document.getElementById('record-first-btn');
+                if (recordBtn) {
+                    recordBtn.addEventListener('click', () => startRecording('first'));
+                }
+                document.getElementById('save-first-btn').addEventListener('click', () => saveRecording('first'));
+                document.getElementById('discard-first-btn').addEventListener('click', discardRecording);
+            } else if (playerStatus.canRecordSecond) {
+                const recordBtn = document.getElementById('record-second-btn');
+                if (recordBtn) {
+                    recordBtn.addEventListener('click', () => startRecording('second'));
+                }
+                document.getElementById('save-second-btn').addEventListener('click', () => saveRecording('second'));
+                document.getElementById('discard-second-btn').addEventListener('click', discardRecording);
+            }
+        }
+
+        // Start recording audio
+        async function startRecording(type) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: true
+                });
+                
+                // Simple MediaRecorder setup
+                const options = {};
+                if (MediaRecorder.isTypeSupported('audio/webm')) {
+                    options.mimeType = 'audio/webm';
+                } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                    options.mimeType = 'audio/mp4';
+                }
+                
+                mediaRecorder = new MediaRecorder(stream, options);
+                audioChunks = [];
+                currentRecordingType = type;
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = () => {
+                    if (audioChunks.length > 0) {
+                        currentAudioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                        const audioUrl = URL.createObjectURL(currentAudioBlob);
+                        
+                        // Show preview and actions
+                        const audioPreview = document.getElementById('audio-preview');
+                        const recordingActions = document.getElementById('recording-actions');
+                        const recordBtn = document.getElementById(`record-${type}-btn`);
+                        
+                        audioPreview.src = audioUrl;
+                        audioPreview.style.display = 'block';
+                        recordingActions.style.display = 'flex';
+                        recordBtn.style.display = 'none';
+                    }
+                    
+                    // Stop all tracks to release microphone
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                
+                mediaRecorder.onerror = (event) => {
+                    showMessage('Recording error: ' + event.error.message, 'error');
+                    stopRecording();
+                };
+                
+                // Start recording
+                mediaRecorder.start();
+                isRecording = true;
+                recordingStartTime = Date.now();
+                
+                // Update UI
+                const recordBtn = document.getElementById(`record-${type}-btn`);
+                const recordingTimerElement = document.getElementById('recording-timer');
+                
+                recordBtn.textContent = '⏹️ Aufnahme stoppen';
+                recordBtn.classList.add('recording');
+                recordingTimerElement.style.display = 'block';
+                
+                // Add click handler to stop recording
+                recordBtn.onclick = stopRecording;
+                
+                // Start timer
+                recordingTimer = setInterval(updateRecordingTimer, 1000);
+                
+            } catch (error) {
+                showMessage('Mikrofon-Zugriff fehlgeschlagen: ' + error.message, 'error');
+            }
+        }
+
+        // Update recording timer
+        function updateRecordingTimer() {
+            if (!isRecording || !recordingStartTime) return;
+            
+            const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            
+            const timerElement = document.getElementById('recording-timer');
+            if (timerElement) {
+                timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+
+        // Stop recording
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                try {
+                    if (mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                    }
+                    isRecording = false;
+                    
+                    if (recordingTimer) {
+                        clearInterval(recordingTimer);
+                        recordingTimer = null;
+                    }
+                } catch (error) {
+                    console.error('Error stopping recording:', error);
+                    isRecording = false;
+                }
+            }
+        }
+
+        // Save recording to server
+        async function saveRecording(type) {
+            if (!currentAudioBlob) {
+                showMessage('Keine Aufnahme zum Speichern', 'error');
+                return;
+            }
+
+            let playerName = '';
+            
+            if (type === 'first') {
+                // For first recording, get name from input
+                const nameInput = document.getElementById('player-name-input');
+                playerName = nameInput ? nameInput.value.trim() : '';
+                
+                if (!playerName) {
+                    showMessage('Bitte gib deinen Namen ein, bevor du speicherst', 'error');
+                    return;
+                }
+            } else {
+                // For second recording, get name from existing game state
+                if (gameState && gameState.length > 0) {
+                    const currentPlayer = gameState[gameState.length - 1];
+                    playerName = currentPlayer[2] || `Spieler ${gameState.length}`;
+                } else {
+                    playerName = `Spieler ${playerStatus.playerNumber}`;
+                }
+            }
+
+            const reader = new FileReader();
+            
+            reader.onload = async () => {
+                const base64Data = reader.result.split(',')[1];
+                
+                try {
+                    const response = await fetch(`/api/record-${type}-audio`, {
+                    method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            audioData: base64Data,
+                            mimeType: 'audio/webm',
+                            playerName: playerName
+                        })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage(result.message, 'success');
+                        // Clear the stored audio blob after successful save
+                        currentAudioBlob = null;
+                    await loadGameState(); // Refresh the display
+                        
+                        // If this was a first recording, automatically show second recording interface
+                        if (type === 'first') {
+                            setTimeout(() => {
+                                updateRecordingInterface();
+                            }, 1000);
+                        }
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                    showMessage('Aufnahme konnte nicht gespeichert werden: ' + error.message, 'error');
+                }
+            };
+            
+            reader.readAsDataURL(currentAudioBlob);
+        }
+
+        // Discard current recording
+        function discardRecording() {
+            audioChunks = [];
+            currentAudioBlob = null;
+            currentRecordingType = null;
+            
+            // Reset UI
+            const audioPreview = document.getElementById('audio-preview');
+            const recordingActions = document.getElementById('recording-actions');
+            const recordingTimer = document.getElementById('recording-timer');
+            const recordBtn = document.querySelector('.record-button');
+            
+            if (audioPreview) audioPreview.style.display = 'none';
+            if (recordingActions) recordingActions.style.display = 'none';
+            if (recordingTimer) recordingTimer.style.display = 'none';
+            if (recordBtn) {
+                recordBtn.style.display = 'block';
+                recordBtn.textContent = recordBtn.textContent.replace('⏹️ Aufnahme stoppen', '🎤 Aufnahme starten');
+                recordBtn.classList.remove('recording');
+            }
+        }
+
+        // Show message to user
+        function showMessage(message, type = 'info') {
+            const container = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = message;
+            
+            container.appendChild(messageDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, 5000);
+            
+            // Scroll to message
+            messageDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Set up auto-play functionality for sequential audio playback
+        function setupAutoPlay() {
+            const audioElements = document.querySelectorAll('.auto-play-audio');
+            
+            audioElements.forEach((audio, index) => {
+                // Remove any existing event listeners
+                audio.removeEventListener('play', handleAudioPlay);
+                audio.removeEventListener('ended', handleAudioEnded);
+                
+                // Add event listeners
+                audio.addEventListener('play', () => handleAudioPlay(audio, index));
+                audio.addEventListener('ended', () => handleAudioEnded(audio, index));
+            });
+        }
+
+        // Handle when an audio element starts playing
+        function handleAudioPlay(currentAudio, currentIndex) {
+            // Pause all other audio elements
+            const allAudioElements = document.querySelectorAll('.auto-play-audio');
+            allAudioElements.forEach((audio, index) => {
+                if (index !== currentIndex && !audio.paused) {
+                    audio.pause();
+                    audio.currentTime = 0; // Reset to beginning
+                }
+            });
+        }
+
+        // Handle when an audio element ends
+        function handleAudioEnded(currentAudio, currentIndex) {
+            // Find the next audio element and play it
+            const allAudioElements = document.querySelectorAll('.auto-play-audio');
+            const nextIndex = currentIndex + 1;
+            
+            if (nextIndex < allAudioElements.length) {
+                const nextAudio = allAudioElements[nextIndex];
+                
+                // Small delay to ensure smooth transition
+                setTimeout(() => {
+                    nextAudio.play().catch(error => {
+                        // This is normal - browsers often prevent auto-play
+                    });
+                }, 100);
+            }
+        }
+
+        // Auto-refresh when someone is recording to check for completion
+        setInterval(() => {
+            if (playerStatus && playerStatus.isRecording) {
+                loadGameState();
+            }
+        }, 5000);
+
+        // Download complete story functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listener for download button
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.id === 'download-story-btn') {
+                    downloadCompleteStory();
+                }
+            });
+        });
+
+        async function downloadCompleteStory() {
+            const downloadBtn = document.getElementById('download-story-btn');
+            const downloadProgress = document.getElementById('download-progress');
+            
+            if (!downloadBtn || !downloadProgress) return;
+            
+            try {
+                // Show progress
+                downloadBtn.disabled = true;
+                downloadProgress.style.display = 'block';
+                
+                // Get all visible audio files
+                const visibleFiles = window.previousVisibleFiles || [];
+                if (visibleFiles.length === 0) {
+                    showMessage('Keine Audio-Dateien zum Herunterladen', 'error');
+                    return;
+                }
+                
+                // Collect all audio file URLs in order
+                const audioUrls = [];
+                for (const player of visibleFiles) {
+                    if (player.firstFile) {
+                        audioUrls.push(`/uploads/${player.firstFile}`);
+                    }
+                    if (player.secondFile) {
+                        audioUrls.push(`/uploads/${player.secondFile}`);
+                    }
+                }
+                
+                if (audioUrls.length === 0) {
+                    showMessage('Keine Audio-Dateien zum Herunterladen', 'error');
+                    return;
+                }
+                
+                // Load and concatenate audio files
+                const audioBuffers = [];
+                for (let i = 0; i < audioUrls.length; i++) {
+                    try {
+                        const response = await fetch(audioUrls[i]);
+                        const arrayBuffer = await response.arrayBuffer();
+                        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                        audioBuffers.push(audioBuffer);
+                    } catch (error) {
+                        console.error(`Error loading audio file ${audioUrls[i]}:`, error);
+                        showMessage(`Fehler beim Laden der Audio-Datei ${i + 1}`, 'error');
+                        return;
+                    }
+                }
+                
+                // Concatenate audio buffers
+                const totalLength = audioBuffers.reduce((sum, buffer) => sum + buffer.length, 0);
+                const concatenatedBuffer = audioContext.createBuffer(
+                    audioBuffers[0].numberOfChannels,
+                    totalLength,
+                    audioBuffers[0].sampleRate
+                );
+                
+                let offset = 0;
+                for (const buffer of audioBuffers) {
+                    for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+                        concatenatedBuffer.copyToChannel(buffer.getChannelData(channel), channel, offset);
+                    }
+                    offset += buffer.length;
+                }
+                
+                // Convert to WAV and download
+                const wavBlob = audioBufferToWav(concatenatedBuffer);
+                const url = URL.createObjectURL(wavBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `komplette-geschichte-${new Date().toISOString().split('T')[0]}.wav`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showMessage('Geschichte erfolgreich heruntergeladen!', 'success');
+                
+            } catch (error) {
+                console.error('Error downloading story:', error);
+                showMessage('Fehler beim Herunterladen der Geschichte: ' + error.message, 'error');
+            } finally {
+                // Hide progress
+                downloadBtn.disabled = false;
+                downloadProgress.style.display = 'none';
+            }
+        }
+
+        // Convert AudioBuffer to WAV format
+        function audioBufferToWav(buffer) {
+            const length = buffer.length;
+            const numberOfChannels = buffer.numberOfChannels;
+            const sampleRate = buffer.sampleRate;
+            const arrayBuffer = new ArrayBuffer(44 + length * numberOfChannels * 2);
+            const view = new DataView(arrayBuffer);
+            
+            // WAV header
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+            
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + length * numberOfChannels * 2, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numberOfChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * numberOfChannels * 2, true);
+            view.setUint16(32, numberOfChannels * 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, length * numberOfChannels * 2, true);
+            
+            // Convert float samples to 16-bit PCM
+            let offset = 44;
+            for (let i = 0; i < length; i++) {
+                for (let channel = 0; channel < numberOfChannels; channel++) {
+                    const sample = Math.max(-1, Math.min(1, buffer.getChannelData(channel)[i]));
+                    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                    offset += 2;
+                }
+            }
+            
+            return new Blob([arrayBuffer], { type: 'audio/wav' });
+        }
+
+        // Initialize audio context
+        let audioContext;
+        if (typeof AudioContext !== 'undefined') {
+            audioContext = new AudioContext();
+        } else if (typeof webkitAudioContext !== 'undefined') {
+            audioContext = new webkitAudioContext();
+        }
+    </script>
+</body>
+</html>

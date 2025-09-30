@@ -166,7 +166,10 @@ app.post('/api/record-first-audio', (req, res) => {
         // Generate filename for recorded audio
         const playerIdx = sharedGameState.length;
         const uniqueId = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const extension = mimeType.includes('webm') ? '.webm' : '.wav';
+        let extension = '.wav'; // default
+        if (mimeType.includes('webm')) extension = '.webm';
+        else if (mimeType.includes('mp4')) extension = '.mp4';
+        else if (mimeType.includes('wav')) extension = '.wav';
         const filename = `player${playerIdx}_file1_${uniqueId}${extension}`;
         const filePath = path.join(UPLOAD_DIR, filename);
         
@@ -207,7 +210,10 @@ app.post('/api/record-second-audio', (req, res) => {
         // Generate filename for recorded audio
         const playerIdx = sharedGameState.length - 1;
         const uniqueId = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const extension = mimeType.includes('webm') ? '.webm' : '.wav';
+        let extension = '.wav'; // default
+        if (mimeType.includes('webm')) extension = '.webm';
+        else if (mimeType.includes('mp4')) extension = '.mp4';
+        else if (mimeType.includes('wav')) extension = '.wav';
         const filename = `player${playerIdx}_file2_${uniqueId}${extension}`;
         const filePath = path.join(UPLOAD_DIR, filename);
         

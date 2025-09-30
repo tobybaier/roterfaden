@@ -859,6 +859,7 @@
             </ul>
         </div>
 
+
         <!-- Current Game State -->
         <div class="section">
             <h2>🎼 Die Geschichte bisher</h2>
@@ -909,6 +910,24 @@
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
             loadGameState();
+            
+            // iOS Safari audio fix - enable audio context on first user interaction
+            let audioContextInitialized = false;
+            function enableAudioContext() {
+                if (!audioContextInitialized && audioContext) {
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume().then(() => {
+                            console.log('Audio context resumed for iOS Safari');
+                        });
+                    }
+                    audioContextInitialized = true;
+                }
+            }
+            
+            // Enable audio on any user interaction
+            document.addEventListener('touchstart', enableAudioContext, { once: true });
+            document.addEventListener('click', enableAudioContext, { once: true });
+            document.addEventListener('keydown', enableAudioContext, { once: true });
         });
 
         // Load current game state from server
@@ -952,14 +971,14 @@
                 if (player.firstFile) {
                     html += `<div class="audio-file">`;
                     html += `<label>Erste Audio-Datei:</label>`;
-                    html += `<audio controls class="auto-play-audio"><source src="/uploads/${player.firstFile}" type="audio/webm">Ihr Browser unterstützt das Audio-Element nicht.</audio>`;
+                    html += `<audio controls class="auto-play-audio" preload="metadata" playsinline webkit-playsinline><source src="/uploads/${player.firstFile}" type="audio/webm"><source src="/uploads/${player.firstFile}" type="audio/mp4">Ihr Browser unterstützt das Audio-Element nicht.</audio>`;
                     html += `</div>`;
                 }
                 
                 if (player.secondFile) {
                     html += `<div class="audio-file">`;
                     html += `<label>Zweite Audio-Datei:</label>`;
-                    html += `<audio controls class="auto-play-audio" data-player-index="${i}"><source src="/uploads/${player.secondFile}" type="audio/webm">Ihr Browser unterstützt das Audio-Element nicht.</audio>`;
+                    html += `<audio controls class="auto-play-audio" data-player-index="${i}" preload="metadata" playsinline webkit-playsinline><source src="/uploads/${player.secondFile}" type="audio/webm"><source src="/uploads/${player.secondFile}" type="audio/mp4">Ihr Browser unterstützt das Audio-Element nicht.</audio>`;
                     html += `</div>`;
                     
                     // Check if this second file was just revealed
@@ -1034,13 +1053,16 @@
                             <label for="player-name-input" class="name-label">Gib deinen Namen ein:</label>
                             <input type="text" id="player-name-input" class="name-input" placeholder="Dein Name" maxlength="20">
                         </div>
+                        <button id="test-mic-btn" class="action-button" style="margin-bottom: 10px;">
+                            🎤 Mikrofon testen
+                        </button>
                         <button id="record-first-btn" class="record-button">
                             🎤 Ersten Clip aufnehmen
                         </button>
                         <div id="recording-timer" class="recording-timer" style="display: none;">
                             00:00
                         </div>
-                        <audio id="audio-preview" class="audio-preview" controls style="display: none;"></audio>
+                        <audio id="audio-preview" class="audio-preview" controls style="display: none;" preload="metadata" playsinline webkit-playsinline></audio>
                         <div id="recording-actions" class="recording-actions" style="display: none;">
                             <button id="save-first-btn" class="action-button">Aufnahme speichern</button>
                             <button id="discard-first-btn" class="action-button">Verwerfen & Neu aufnehmen</button>
@@ -1074,7 +1096,7 @@
                         <div id="recording-timer" class="recording-timer" style="display: none;">
                             00:00
                         </div>
-                        <audio id="audio-preview" class="audio-preview" controls style="display: none;"></audio>
+                        <audio id="audio-preview" class="audio-preview" controls style="display: none;" preload="metadata" playsinline webkit-playsinline></audio>
                         <div id="recording-actions" class="recording-actions" style="display: none;">
                             <button id="save-second-btn" class="action-button">Aufnahme speichern</button>
                             <button id="discard-second-btn" class="action-button">Verwerfen & Neu aufnehmen</button>
@@ -1092,34 +1114,130 @@
             // Add event listeners for recording buttons
             if (playerStatus.canRecordFirst) {
                 const recordBtn = document.getElementById('record-first-btn');
+                const testBtn = document.getElementById('test-mic-btn');
+                const saveBtn = document.getElementById('save-first-btn');
+                const discardBtn = document.getElementById('discard-first-btn');
+                
                 if (recordBtn) {
                     recordBtn.addEventListener('click', () => startRecording('first'));
                 }
-                document.getElementById('save-first-btn').addEventListener('click', () => saveRecording('first'));
-                document.getElementById('discard-first-btn').addEventListener('click', discardRecording);
+                if (testBtn) {
+                    testBtn.addEventListener('click', testMicrophone);
+                }
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', () => saveRecording('first'));
+                }
+                if (discardBtn) {
+                    discardBtn.addEventListener('click', discardRecording);
+                }
             } else if (playerStatus.canRecordSecond) {
                 const recordBtn = document.getElementById('record-second-btn');
+                const saveBtn = document.getElementById('save-second-btn');
+                const discardBtn = document.getElementById('discard-second-btn');
+                
                 if (recordBtn) {
                     recordBtn.addEventListener('click', () => startRecording('second'));
                 }
-                document.getElementById('save-second-btn').addEventListener('click', () => saveRecording('second'));
-                document.getElementById('discard-second-btn').addEventListener('click', discardRecording);
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', () => saveRecording('second'));
+                }
+                if (discardBtn) {
+                    discardBtn.addEventListener('click', discardRecording);
+                }
             }
         }
 
-        // Start recording audio
-        async function startRecording(type) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: true
+        // Test microphone access
+        function testMicrophone() {
+            // Debug: Log what's available
+            console.log('navigator.mediaDevices:', navigator.mediaDevices);
+            console.log('navigator.getUserMedia:', navigator.getUserMedia);
+            console.log('navigator.webkitGetUserMedia:', navigator.webkitGetUserMedia);
+            
+            // Check for getUserMedia support with fallbacks
+            let getUserMedia = null;
+            
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                getUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+                console.log('Using navigator.mediaDevices.getUserMedia');
+            } else if (navigator.getUserMedia) {
+                getUserMedia = navigator.getUserMedia.bind(navigator);
+                console.log('Using navigator.getUserMedia');
+            } else if (navigator.webkitGetUserMedia) {
+                getUserMedia = navigator.webkitGetUserMedia.bind(navigator);
+                console.log('Using navigator.webkitGetUserMedia');
+            } else if (navigator.mozGetUserMedia) {
+                getUserMedia = navigator.mozGetUserMedia.bind(navigator);
+                console.log('Using navigator.mozGetUserMedia');
+            }
+            
+            if (!getUserMedia) {
+                showMessage('❌ Mikrofon wird von diesem Browser nicht unterstützt. Debug: ' + 
+                    'mediaDevices=' + !!navigator.mediaDevices + 
+                    ', getUserMedia=' + !!navigator.getUserMedia + 
+                    ', webkitGetUserMedia=' + !!navigator.webkitGetUserMedia, 'error');
+                return;
+            }
+            
+            // Request microphone permission immediately on user click
+            getUserMedia({ audio: true })
+                .then(stream => {
+                    showMessage('✅ Mikrofon funktioniert! Du kannst jetzt aufnehmen.', 'success');
+                    // Stop the test stream
+                    stream.getTracks().forEach(track => track.stop());
+                })
+                .catch(error => {
+                    showMessage('❌ Mikrofon-Zugriff fehlgeschlagen: ' + error.message, 'error');
                 });
-                
-                // Simple MediaRecorder setup
+        }
+
+        // Start recording audio
+        function startRecording(type) {
+            // Check for getUserMedia support with fallbacks
+            let getUserMedia = null;
+            
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                getUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+            } else if (navigator.getUserMedia) {
+                getUserMedia = navigator.getUserMedia.bind(navigator);
+            } else if (navigator.webkitGetUserMedia) {
+                getUserMedia = navigator.webkitGetUserMedia.bind(navigator);
+            } else if (navigator.mozGetUserMedia) {
+                getUserMedia = navigator.mozGetUserMedia.bind(navigator);
+            }
+            
+            if (!getUserMedia) {
+                showMessage('❌ Mikrofon wird von diesem Browser nicht unterstützt', 'error');
+                return;
+            }
+            
+            // Request microphone permission immediately on user click
+            getUserMedia({ 
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                }
+            })
+            .then(stream => {
+                startRecordingWithStream(stream, type);
+            })
+            .catch(error => {
+                showMessage('❌ Mikrofon-Zugriff fehlgeschlagen: ' + error.message, 'error');
+            });
+        }
+
+        // Start recording with the obtained stream
+        function startRecordingWithStream(stream, type) {
+            try {
+                // MediaRecorder setup with iOS Safari compatibility
                 const options = {};
-                if (MediaRecorder.isTypeSupported('audio/webm')) {
-                    options.mimeType = 'audio/webm';
-                } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                if (MediaRecorder.isTypeSupported('audio/mp4')) {
                     options.mimeType = 'audio/mp4';
+                } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+                    options.mimeType = 'audio/webm';
+                } else if (MediaRecorder.isTypeSupported('audio/wav')) {
+                    options.mimeType = 'audio/wav';
                 }
                 
                 mediaRecorder = new MediaRecorder(stream, options);
@@ -1336,11 +1454,23 @@
                 // Remove any existing event listeners
                 audio.removeEventListener('play', handleAudioPlay);
                 audio.removeEventListener('ended', handleAudioEnded);
+                audio.removeEventListener('canplaythrough', handleAudioCanPlay);
                 
                 // Add event listeners
                 audio.addEventListener('play', () => handleAudioPlay(audio, index));
                 audio.addEventListener('ended', () => handleAudioEnded(audio, index));
+                audio.addEventListener('canplaythrough', () => handleAudioCanPlay(audio, index));
+                
+                // iOS Safari specific fixes
+                audio.preload = 'metadata';
+                audio.load(); // Force reload for iOS
             });
+        }
+
+        // Handle when audio can play (iOS Safari fix)
+        function handleAudioCanPlay(audio, index) {
+            // Ensure audio is ready for playback on iOS
+            audio.volume = 1.0;
         }
 
         // Handle when an audio element starts playing
@@ -1364,12 +1494,23 @@
             if (nextIndex < allAudioElements.length) {
                 const nextAudio = allAudioElements[nextIndex];
                 
-                // Small delay to ensure smooth transition
-                setTimeout(() => {
-                    nextAudio.play().catch(error => {
-                        // This is normal - browsers often prevent auto-play
-                    });
-                }, 100);
+                // iOS Safari specific: ensure audio is ready before playing
+                if (nextAudio.readyState >= 2) { // HAVE_CURRENT_DATA
+                    setTimeout(() => {
+                        nextAudio.play().catch(error => {
+                            console.log('Auto-play prevented:', error.message);
+                        });
+                    }, 100);
+                } else {
+                    // Wait for audio to be ready
+                    nextAudio.addEventListener('canplaythrough', () => {
+                        setTimeout(() => {
+                            nextAudio.play().catch(error => {
+                                console.log('Auto-play prevented:', error.message);
+                            });
+                        }, 100);
+                    }, { once: true });
+                }
             }
         }
 

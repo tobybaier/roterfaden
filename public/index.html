@@ -441,6 +441,29 @@
             display: none;
         }
 
+        /* Listening hint styling */
+        .listening-hint {
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .listening-hint-content {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #92400e;
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: 2px solid #f59e0b;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+            animation: listeningPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes listeningPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
         .player-title {
             font-weight: 600;
             color: #dc2626;
@@ -962,6 +985,7 @@
                 }
             }
             
+            
             html += '</div>';
             container.innerHTML = html;
             
@@ -1024,7 +1048,24 @@
                     </div>
                 `;
             } else if (playerStatus.canRecordSecond) {
+                // Check if there's a newly revealed second recording from previous player
+                const visibleFiles = window.previousVisibleFiles || [];
+                let listeningHint = '';
+                if (visibleFiles.length > 1) {
+                    const previousPlayer = visibleFiles[visibleFiles.length - 2];
+                    if (previousPlayer && previousPlayer.secondFile) {
+                        listeningHint = `
+                            <div class="listening-hint">
+                                <div class="listening-hint-content">
+                                    🎧 Höre dir zuerst den zweiten Satz von ${previousPlayer.playerName} an!
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                
                 html += `<div class="current-player-info">Spieler ${playerStatus.playerNumber} - Nimm deinen zweiten Audio-Clip auf</div>`;
+                html += listeningHint;
                 html += `
                     <div class="recording-controls">
                         <button id="record-second-btn" class="record-button">

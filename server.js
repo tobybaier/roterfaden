@@ -12,6 +12,36 @@ if (!fs.existsSync(UPLOAD_DIR)) {
     fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
 
+// Shared game state (in-memory with file persistence)
+const GAME_STATE_FILE = path.join(__dirname, 'game-state.json');
+let sharedGameState = [];
+
+// Load game state from file on startup
+function loadGameState() {
+    try {
+        if (fs.existsSync(GAME_STATE_FILE)) {
+            const data = fs.readFileSync(GAME_STATE_FILE, 'utf8');
+            sharedGameState = JSON.parse(data);
+            console.log(`Loaded game state with ${sharedGameState.length} players`);
+        }
+    } catch (error) {
+        console.error('Error loading game state:', error);
+        sharedGameState = [];
+    }
+}
+
+// Save game state to file
+function saveGameState() {
+    try {
+        fs.writeFileSync(GAME_STATE_FILE, JSON.stringify(sharedGameState, null, 2));
+    } catch (error) {
+        console.error('Error saving game state:', error);
+    }
+}
+
+// Load game state on startup
+loadGameState();
+
 // Session configuration
 app.use(session({
     secret: 'audio-game-secret',
@@ -29,13 +59,6 @@ app.use(express.static('public'));
 app.use('/uploads', express.static(UPLOAD_DIR));
 
 // Helper functions
-function initializeGameState(req) {
-    if (!req.session.gameState) {
-        req.session.gameState = [];
-    }
-    return req.session.gameState;
-}
-
 function getCurrentPlayerStatus(gameState) {
     if (gameState.length === 0) {
         return { isNewPlayer: true, playerNumber: 1, needsSecondFile: false, canRecordFirst: true, canRecordSecond: false, isRecording: false };
@@ -111,12 +134,11 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/game-state', (req, res) => {
-    const gameState = initializeGameState(req);
-    const playerStatus = getCurrentPlayerStatus(gameState);
-    const visibleFiles = getVisibleAudioFiles(gameState);
+    const playerStatus = getCurrentPlayerStatus(sharedGameState);
+    const visibleFiles = getVisibleAudioFiles(sharedGameState);
     
     res.json({
-        gameState: gameState,
+        gameState: sharedGameState,
         playerStatus: playerStatus,
         visibleFiles: visibleFiles
     });
@@ -130,15 +152,14 @@ app.post('/api/record-first-audio', (req, res) => {
             return res.status(400).json({ error: 'No audio data received' });
         }
         
-        const gameState = initializeGameState(req);
-        const playerStatus = getCurrentPlayerStatus(gameState);
+        const playerStatus = getCurrentPlayerStatus(sharedGameState);
         
-        if (!playerStatus.isNewPlayer) {
-            return res.status(400).json({ error: 'Not ready for new player' });
+        if (!playerStatus.canRecordFirst) {
+            return res.status(400).json({ error: 'Not ready to record first audio' });
         }
         
         // Generate filename for recorded audio
-        const playerIdx = gameState.length;
+        const playerIdx = sharedGameState.length;
         const uniqueId = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const extension = mimeType.includes('webm') ? '.webm' : '.wav';
         const filename = `player${playerIdx}_file1_${uniqueId}${extension}`;
@@ -149,11 +170,14 @@ app.post('/api/record-first-audio', (req, res) => {
         fs.writeFileSync(filePath, audioBuffer);
         
         // Add new player with first file, name, and timestamp
-        gameState.push([filename, null, playerName || `Player ${playerIdx + 1}`, Date.now()]);
+        sharedGameState.push([filename, null, playerName || `Spieler ${playerIdx + 1}`, Date.now()]);
+        
+        // Save game state to file
+        saveGameState();
         
         res.json({ 
             success: true, 
-            message: 'First audio recorded! Now record your second audio.',
+            message: 'Erste Aufnahme gespeichert! Jetzt nimm deine zweite Aufnahme auf.',
             filename: filename
         });
     } catch (error) {
@@ -169,15 +193,14 @@ app.post('/api/record-second-audio', (req, res) => {
             return res.status(400).json({ error: 'No audio data received' });
         }
         
-        const gameState = initializeGameState(req);
-        const playerStatus = getCurrentPlayerStatus(gameState);
+        const playerStatus = getCurrentPlayerStatus(sharedGameState);
         
-        if (!playerStatus.needsSecondFile) {
-            return res.status(400).json({ error: 'Not ready for second file' });
+        if (!playerStatus.canRecordSecond) {
+            return res.status(400).json({ error: 'Not ready to record second audio' });
         }
         
         // Generate filename for recorded audio
-        const playerIdx = gameState.length - 1;
+        const playerIdx = sharedGameState.length - 1;
         const uniqueId = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const extension = mimeType.includes('webm') ? '.webm' : '.wav';
         const filename = `player${playerIdx}_file2_${uniqueId}${extension}`;
@@ -188,24 +211,34 @@ app.post('/api/record-second-audio', (req, res) => {
         fs.writeFileSync(filePath, audioBuffer);
         
         // Update current player's second file
-        gameState[gameState.length - 1][1] = filename;
+        sharedGameState[sharedGameState.length - 1][1] = filename;
         
         // Update player name if provided
         if (playerName) {
-            gameState[gameState.length - 1][2] = playerName;
+            sharedGameState[sharedGameState.length - 1][2] = playerName;
         }
         
         // Clear the timestamp since recording is complete
-        gameState[gameState.length - 1][3] = null;
+        sharedGameState[sharedGameState.length - 1][3] = null;
+        
+        // Save game state to file
+        saveGameState();
         
         res.json({ 
             success: true, 
-            message: 'Second audio recorded! Wait for the next player to join.',
+            message: 'Zweite Aufnahme gespeichert! Warte auf den nächsten Spieler.',
             filename: filename
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+});
+
+// Reset game state (for testing purposes)
+app.post('/api/reset-game', (req, res) => {
+    sharedGameState = [];
+    saveGameState();
+    res.json({ success: true, message: 'Spiel zurückgesetzt!' });
 });
 
 // Error handling middleware

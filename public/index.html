@@ -1527,6 +1527,47 @@
         } else if (typeof webkitAudioContext !== 'undefined') {
             audioContext = new webkitAudioContext();
         }
+
+        // Hidden reset functionality - check for reset in URL
+        function checkForReset() {
+            if (window.location.pathname.includes('/reset')) {
+                if (confirm('🧵 Möchtest du das Spiel wirklich zurücksetzen? Alle Aufnahmen gehen verloren!')) {
+                    resetGame();
+                } else {
+                    // Redirect back to main page if user cancels
+                    window.location.href = '/';
+                }
+            }
+        }
+        
+        // Check for reset on page load
+        checkForReset();
+
+        // Reset game function
+        async function resetGame() {
+            try {
+                const response = await fetch('/api/reset-game', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage('Spiel wurde zurückgesetzt!', 'success');
+                    // Redirect to main page after successful reset
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                } else {
+                    showMessage('Fehler beim Zurücksetzen: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Fehler beim Zurücksetzen: ' + error.message, 'error');
+            }
+        }
     </script>
 </body>
 </html>

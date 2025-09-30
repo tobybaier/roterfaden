@@ -133,6 +133,11 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Hidden reset route
+app.get('/reset', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 app.get('/api/game-state', (req, res) => {
     const playerStatus = getCurrentPlayerStatus(sharedGameState);
     const visibleFiles = getVisibleAudioFiles(sharedGameState);

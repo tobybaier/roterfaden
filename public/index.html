@@ -907,6 +907,21 @@
         let currentAudioBlob = null; // Store the recorded audio blob
         let playerName = null; // Store the current player's name
 
+        // Browser and device detection
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+        }
+
+        function isSupportedBrowser() {
+            const userAgent = navigator.userAgent;
+            return userAgent.includes('Chrome') || userAgent.includes('Firefox');
+        }
+
+        function isRecordingSupported() {
+            return !isMobileDevice() && isSupportedBrowser();
+        }
+
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
             loadGameState();
@@ -1043,6 +1058,16 @@
                 return;
             }
 
+            // Check if recording is supported on this device/browser
+            if (!isRecordingSupported()) {
+                container.innerHTML = `
+                    <div class="current-player-info">
+                        📱 Mobil geht nicht, bitte Mac oder Windows mit Chrome oder Firefox verwenden.
+                    </div>
+                `;
+                return;
+            }
+
             let html = '';
 
             if (playerStatus.canRecordFirst) {
@@ -1053,9 +1078,6 @@
                             <label for="player-name-input" class="name-label">Gib deinen Namen ein:</label>
                             <input type="text" id="player-name-input" class="name-input" placeholder="Dein Name" maxlength="20">
                         </div>
-                        <button id="test-mic-btn" class="action-button" style="margin-bottom: 10px;">
-                            🎤 Mikrofon testen
-                        </button>
                         <button id="record-first-btn" class="record-button">
                             🎤 Ersten Clip aufnehmen
                         </button>
@@ -1149,6 +1171,12 @@
 
         // Test microphone access
         function testMicrophone() {
+            // Check if recording is supported on this device/browser
+            if (!isRecordingSupported()) {
+                showMessage('📱 Mobil geht nicht, bitte Mac oder Windows mit Chrome oder Firefox verwenden.', 'error');
+                return;
+            }
+
             // Debug: Log what's available
             console.log('navigator.mediaDevices:', navigator.mediaDevices);
             console.log('navigator.getUserMedia:', navigator.getUserMedia);
@@ -1193,6 +1221,12 @@
 
         // Start recording audio
         function startRecording(type) {
+            // Check if recording is supported on this device/browser
+            if (!isRecordingSupported()) {
+                showMessage('📱 Mobil geht nicht, bitte Mac oder Windows mit Chrome oder Firefox verwenden.', 'error');
+                return;
+            }
+
             // Check for getUserMedia support with fallbacks
             let getUserMedia = null;
             
